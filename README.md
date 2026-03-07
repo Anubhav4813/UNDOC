@@ -16,7 +16,8 @@ vehicle certificates, ID cards, insurance, passports, and more — so you never 
 
 ## Screenshots
 
-<img width="1080" height="2400" alt="Screenshot_20260307-113238 UNDOC" src="https://github.com/user-attachments/assets/a6eb46dc-056f-4536-a02b-bb89db84c4c8" />
+<img width="1076" height="2169" alt="undoc_ss" src="https://github.com/user-attachments/assets/150feb1e-a2c1-4cc5-9e3b-e2cd9b24a94a" />
+
 
 ## Installation
 
