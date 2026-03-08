@@ -1,6 +1,11 @@
 plugins {
     id 'com.android.application'
+    id 'com.google.gms.google-services'
 }
+
+def localProps = new Properties()
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) localProps.load(localPropsFile.newDataInputStream())
 
 android {
     namespace 'com.docexpiry.tracker'
@@ -12,11 +17,35 @@ android {
         targetSdk 34
         versionCode 2
         versionName "2.0"
+        // Ensures only supported ABIs are packaged (reduces APK size)
+        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64' }
+        buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${localProps['GOOGLE_WEB_CLIENT_ID'] ?: ''}\""
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    signingConfigs {
+        // Fill in these values from your keystore before generating a release build
+        release {
+            // storeFile     file("../keystore/undoc-release.jks")
+            // storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
+            // keyAlias      System.getenv("KEY_ALIAS")          ?: ""
+            // keyPassword   System.getenv("KEY_PASSWORD")       ?: ""
+        }
     }
 
     buildTypes {
-        release {
+        debug {
+            debuggable true
             minifyEnabled false
+        }
+        release {
+            debuggable false
+            minifyEnabled true
+            shrinkResources true
+            // signingConfig signingConfigs.release   // Uncomment once keystore is set up
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -25,6 +54,36 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def versionName = variant.versionName
+            def versionCode = variant.versionCode
+            def buildType = variant.buildType.name
+            def date = new Date().format("yyyyMMdd")
+
+            outputFileName = "UNDOC-v${versionName}(${versionCode})-${buildType}-${date}.apk"
+        }
+
+        // Auto-copy each build into a versioned folder under project_root/builds/
+        variant.assembleProvider.get().doLast {
+            def versionName = variant.versionName
+            def buildType  = variant.buildType.name
+            def outputDir  = "${rootDir}/builds/${versionName}/${buildType}"
+
+            variant.outputs.each { output ->
+                def apkFile = output.outputFile
+                if (apkFile?.exists()) {
+                    copy {
+                        from apkFile
+                        into outputDir
+                    }
+                    println "✅ Build saved to: ${outputDir}/${apkFile.name}"
+                }
+            }
+        }
+    }
+
 }
 
 dependencies {
@@ -34,4 +93,15 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
     implementation 'androidx.core:core:1.13.1'
+
+    // Encrypted SharedPreferences for secure storage
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+
+    // Firebase (cloud sync + auth)
+    implementation platform('com.google.firebase:firebase-bom:33.9.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-storage'
+    // Google Sign-In
+    implementation 'com.google.android.gms:play-services-auth:21.0.0'
 }

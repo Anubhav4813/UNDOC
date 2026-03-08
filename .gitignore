@@ -6,3 +6,5 @@ app/build/
 build/
 *.jks
 *.keystore
+# Firebase — contains API keys, never commit
+app/google-services.json

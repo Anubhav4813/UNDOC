@@ -50,6 +50,14 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.VH> {
         h.tvCategory.setText(doc.getCategory());
         h.tvCategoryIcon.setText(getCategoryEmoji(doc.getCategory()));
 
+        // Tag badge
+        if (doc.getTag() != null && !doc.getTag().isEmpty()) {
+            h.tvTag.setText(doc.getTag());
+            h.tvTag.setVisibility(View.VISIBLE);
+        } else {
+            h.tvTag.setVisibility(View.GONE);
+        }
+
         // Dates - just the formatted date, no "Issued" or "Expires" prefix
         h.tvIssue.setText(sdf.format(new Date(doc.getIssueDateMillis())));
         h.tvExpiry.setText(sdf.format(new Date(doc.getExpiryDateMillis())));
@@ -103,15 +111,15 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.VH> {
         // Countdown
         if (doc.isExpired()) {
             h.tvCountdown.setText("This document has expired");
-            h.tvCountdown.setTextColor(0xFFFF3060);
+            h.tvCountdown.setTextColor(0xFFFF6B6B);
         } else {
             h.tvCountdown.setText(String.format(Locale.getDefault(),
-                "%02d days  %02d hrs  %02d min  %02d sec",
+                "%02dd  %02dh  %02dm  %02ds",
                 doc.getRemainingDays(),
                 doc.getRemainingHours(),
                 doc.getRemainingMinutes(),
                 doc.getRemainingSeconds()));
-            h.tvCountdown.setTextColor(0xFF374151);
+            h.tvCountdown.setTextColor(0xFFE2E8F0);
         }
     }
 
@@ -136,16 +144,16 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.VH> {
     }
 
     private String getCategoryEmoji(String category) {
-        if (category == null) return "Doc";
+        if (category == null) return "📄";
         switch (category) {
-            case "Vehicle":   return "Car";
-            case "Identity":  return "ID";
-            case "Insurance": return "Ins";
-            case "Medical":   return "Med";
-            case "Travel":    return "Air";
-            case "Education": return "Edu";
-            case "Property":  return "Prop";
-            default:          return "Doc";
+            case "Vehicle":   return "🚗";
+            case "Identity":  return "🆔";
+            case "Insurance": return "🔐";
+            case "Medical":   return "❤️";
+            case "Travel":    return "✈️";
+            case "Education": return "📚";
+            case "Property":  return "🏠";
+            default:          return "📄";
         }
     }
 
@@ -153,7 +161,7 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.VH> {
 
     static class VH extends RecyclerView.ViewHolder {
         TextView tvName, tvCategory, tvCategoryIcon, tvIssue, tvExpiry;
-        TextView tvStatus, tvCountdown, tvPercent;
+        TextView tvStatus, tvCountdown, tvPercent, tvTag;
         android.widget.LinearLayout tvAddImage;
         ProgressBar progressBar;
         View btnDelete, imageContainer;
@@ -169,6 +177,7 @@ public class DocumentAdapter extends RecyclerView.Adapter<DocumentAdapter.VH> {
             tvStatus       = v.findViewById(R.id.tv_status);
             tvCountdown    = v.findViewById(R.id.tv_countdown);
             tvPercent      = v.findViewById(R.id.tv_percent);
+            tvTag          = v.findViewById(R.id.tv_doc_tag);
             tvAddImage     = v.findViewById(R.id.tv_add_image);
             progressBar    = v.findViewById(R.id.progress_bar);
             btnDelete      = v.findViewById(R.id.btn_delete);

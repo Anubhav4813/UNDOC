@@ -1,10 +1,7 @@
 package com.docexpiry.tracker;
 
 import android.app.Activity;
-import android.app.DatePickerDialog;
 import com.google.android.material.datepicker.MaterialDatePicker;
-import com.google.android.material.datepicker.CalendarConstraints;
-import com.google.android.material.datepicker.DateValidatorPointForward;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -32,25 +29,31 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
 
     private List<Document> docs;
+    private List<Document> filteredDocs;
+    private String currentFilter = null; // null = show all
     private DocumentAdapter adapter;
     private DocumentRepository repo;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private android.widget.LinearLayout tvEmpty;
     private android.widget.TextView tvDocCount;
-    private int pendingImageDocId = -1; // which doc we're picking image for
+    private com.google.android.material.chip.ChipGroup chipGroupFilter;
+    private int pendingImageDocId = -1;
     private static final int CAMERA_PERMISSION_CODE = 101;
-
+    private FirebaseManager firebase;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
     private ActivityResultLauncher<Intent> cameraLauncher;
     private String tempCameraPath;
@@ -65,29 +68,82 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Prevent screenshots and screen recording (protects document images & subscription state)
+        getWindow().setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+            android.view.WindowManager.LayoutParams.FLAG_SECURE);
+
         setContentView(R.layout.activity_main);
 
-        repo = new DocumentRepository(this);
+        firebase = new FirebaseManager();
+
+        // Redirect to login if not signed in
+        if (!firebase.isSignedIn()) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        repo = new DocumentRepository(this, firebase.currentUser().getUid());
         docs = repo.loadAll();
+        filteredDocs = new ArrayList<>(docs);
+
+        // Sync from cloud — cloud is always source of truth for this user
+        firebase.loadDocuments((cloudDocs, err) -> runOnUiThread(() -> {
+            if (cloudDocs != null) {
+                // Success: replace local with cloud data (even if empty — means fresh account)
+                docs.clear();
+                docs.addAll(cloudDocs);
+                repo.saveAll(docs);
+                applyFilter(currentFilter);
+            } else if (err != null) {
+                // Error: keep local cache but warn user
+                toast("Cloud sync failed. Showing local data.");
+            }
+        }));
 
         tvEmpty    = (android.widget.LinearLayout) findViewById(R.id.tv_empty);
         tvDocCount = (android.widget.TextView) findViewById(R.id.tv_doc_count);
+        chipGroupFilter = findViewById(R.id.chip_group_filter);
 
         RecyclerView rv = findViewById(R.id.recycler_view);
         rv.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new DocumentAdapter(docs, new DocumentAdapter.OnItemClickListener() {
+        adapter = new DocumentAdapter(filteredDocs, new DocumentAdapter.OnItemClickListener() {
             @Override public void onDelete(int position) { confirmDelete(position); }
             @Override public void onImageClick(int position) { showImageOptions(position); }
             @Override public void onCardClick(int position) { showDocumentDetail(position); }
         });
         rv.setAdapter(adapter);
 
+        buildFilterChips();
         updateEmptyState();
 
         // FAB
         android.widget.TextView fab = (android.widget.TextView) findViewById(R.id.fab_add);
         fab.setOnClickListener(v -> showAddDialog());
+
+        // Sign-out button in header
+        View btnSignOut = findViewById(R.id.btn_sign_out);
+        if (btnSignOut != null) {
+            FirebaseUser user = firebase.currentUser();
+            if (user != null && btnSignOut instanceof TextView) {
+                ((TextView) btnSignOut).setText(user.getEmail());
+            }
+            btnSignOut.setOnClickListener(v ->
+                new MaterialAlertDialogBuilder(this, R.style.DialogTheme)
+                    .setTitle("Sign Out")
+                    .setMessage("Your documents are safely backed up in the cloud. Sign out?")
+                    .setPositiveButton("Sign Out", (d, w) -> {
+                        firebase.signOut();
+                        startActivity(new Intent(this, LoginActivity.class));
+                        finish();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            );
+        }
 
         // Image picker from gallery
         imagePickerLauncher = registerForActivityResult(
@@ -116,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_add_document, null);
 
         TextInputEditText etName   = view.findViewById(R.id.et_doc_name);
+        TextInputEditText etTag    = view.findViewById(R.id.et_doc_tag);
         TextInputEditText etIssue  = view.findViewById(R.id.et_issue_date);
         TextInputEditText etExpiry = view.findViewById(R.id.et_expiry_date);
         AutoCompleteTextView acCategory = view.findViewById(R.id.ac_category);
@@ -124,6 +181,9 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> catAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, categories);
         acCategory.setAdapter(catAdapter);
         acCategory.setText("Vehicle", false);
+
+        // Pre-fill tag if a filter is currently active
+        if (currentFilter != null && etTag != null) etTag.setText(currentFilter);
 
         etIssue.setOnClickListener(v  -> pickDate(etIssue));
         etExpiry.setOnClickListener(v -> pickDate(etExpiry));
@@ -135,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
             .setView(view)
             .setPositiveButton("Add Document", (dialog, which) -> {
                 String name     = etName.getText() != null ? etName.getText().toString().trim() : "";
+                String tag      = etTag != null && etTag.getText() != null ? etTag.getText().toString().trim() : "";
                 String issue    = etIssue.getText() != null ? etIssue.getText().toString().trim() : "";
                 String expiry   = etExpiry.getText() != null ? etExpiry.getText().toString().trim() : "";
                 String category = acCategory.getText().toString().trim();
@@ -150,10 +211,15 @@ public class MainActivity extends AppCompatActivity {
                     if (expiryMs <= issueMs) { toast("Expiry must be after issue date"); return; }
 
                     Document doc = new Document(repo.nextId(docs), name, category.isEmpty() ? "Other" : category, issueMs, expiryMs, null);
+                    doc.setTag(tag.isEmpty() ? null : tag);
                     docs.add(doc);
                     repo.saveAll(docs);
-                    adapter.notifyItemInserted(docs.size() - 1);
-                    updateEmptyState();
+                    firebase.saveDocument(doc, err -> {
+                        if (err != null) runOnUiThread(() -> toast("Save to cloud failed: " + err));
+                    });
+                    // Switch filter to the new doc's tag so user can see it immediately
+                    currentFilter = tag.isEmpty() ? null : tag;
+                    applyFilter(currentFilter);
                     toast("Document added!");
                 } catch (Exception e) {
                     toast("Invalid date. Use DD/MM/YYYY format");
@@ -186,8 +252,8 @@ public class MainActivity extends AppCompatActivity {
     // IMAGE OPTIONS BOTTOM SHEET
     // ───────────────────────────────────────────────
     private void showImageOptions(int position) {
-        pendingImageDocId = docs.get(position).getId();
-        Document doc = docs.get(position);
+        pendingImageDocId = filteredDocs.get(position).getId();
+        Document doc = filteredDocs.get(position);
 
         BottomSheetDialog sheet = new BottomSheetDialog(this, R.style.BottomSheetTheme);
         View v = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_image, null);
@@ -222,7 +288,10 @@ public class MainActivity extends AppCompatActivity {
                 sheet.dismiss();
                 doc.setImagePath(null);
                 repo.saveAll(docs);
-                int idx = docs.indexOf(doc);
+                firebase.saveDocument(doc, err -> {
+                    if (err != null) runOnUiThread(() -> toast("Cloud sync failed: " + err));
+                });
+                int idx = filteredDocs.indexOf(doc);
                 if (idx >= 0) adapter.notifyItemChanged(idx);
                 toast("Image removed");
             });
@@ -309,11 +378,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveImagePathForDoc(String path, int docId) {
-        for (int i = 0; i < docs.size(); i++) {
-            if (docs.get(i).getId() == docId) {
-                docs.get(i).setImagePath(path);
+        for (Document d : docs) {
+            if (d.getId() == docId) {
+                d.setImagePath(path);
                 repo.saveAll(docs);
-                adapter.notifyItemChanged(i);
+                // Images are stored locally only; metadata syncs to cloud
+                firebase.saveDocument(d, err -> {
+                    if (err != null) runOnUiThread(() -> toast("Cloud sync failed: " + err));
+                });
+                int fi = filteredDocs.indexOf(d);
+                if (fi >= 0) adapter.notifyItemChanged(fi);
                 toast("Image saved!");
                 return;
             }
@@ -346,14 +420,17 @@ public class MainActivity extends AppCompatActivity {
     // DOCUMENT DETAIL BOTTOM SHEET
     // ───────────────────────────────────────────────
     private void showDocumentDetail(int position) {
-        Document doc = docs.get(position);
+        Document doc = filteredDocs.get(position);
         BottomSheetDialog sheet = new BottomSheetDialog(this, R.style.BottomSheetTheme);
         View v = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_detail, null);
         sheet.setContentView(v);
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
         ((TextView)v.findViewById(R.id.tv_detail_name)).setText(doc.getName());
-        ((TextView)v.findViewById(R.id.tv_detail_category)).setText(doc.getCategory());
+        String catDisplay = (doc.getTag() != null && !doc.getTag().isEmpty())
+            ? doc.getCategory() + "  ·  " + doc.getTag()
+            : doc.getCategory();
+        ((TextView)v.findViewById(R.id.tv_detail_category)).setText(catDisplay);
         ((TextView)v.findViewById(R.id.tv_detail_issue)).setText(sdf.format(new java.util.Date(doc.getIssueDateMillis())));
         ((TextView)v.findViewById(R.id.tv_detail_expiry)).setText(sdf.format(new java.util.Date(doc.getExpiryDateMillis())));
         ((TextView)v.findViewById(R.id.tv_detail_status)).setText(doc.getStatusLabel());
@@ -374,14 +451,17 @@ public class MainActivity extends AppCompatActivity {
     // DELETE
     // ───────────────────────────────────────────────
     private void confirmDelete(int position) {
+        Document toDelete = filteredDocs.get(position);
         new MaterialAlertDialogBuilder(this, R.style.DialogTheme)
             .setTitle("Delete Document")
-            .setMessage("Remove \"" + docs.get(position).getName() + "\" from tracker?")
+            .setMessage("Remove \"" + toDelete.getName() + "\" from tracker?")
             .setPositiveButton("Delete", (d, w) -> {
-                docs.remove(position);
+                docs.remove(toDelete);
                 repo.saveAll(docs);
-                adapter.notifyItemRemoved(position);
-                updateEmptyState();
+                firebase.deleteDocument(toDelete.getId(), err -> {
+                    if (err != null) runOnUiThread(() -> toast("Cloud delete failed: " + err));
+                });
+                applyFilter(currentFilter);
                 toast("Document removed");
             })
             .setNegativeButton("Cancel", null)
@@ -389,9 +469,51 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateEmptyState() {
-        boolean empty = docs.isEmpty();
+        boolean empty = filteredDocs.isEmpty();
         tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
         tvDocCount.setText(docs.size() + " document" + (docs.size() == 1 ? "" : "s"));
+    }
+
+    // ───────────────────────────────────────────────
+    // FILTER LOGIC
+    // ───────────────────────────────────────────────
+    private void applyFilter(String tag) {
+        currentFilter = tag;
+        filteredDocs.clear();
+        for (Document d : docs) {
+            if (tag == null || tag.equals(d.getTag())) filteredDocs.add(d);
+        }
+        adapter.notifyDataSetChanged();
+        updateEmptyState();
+        buildFilterChips();
+    }
+
+    private void buildFilterChips() {
+        if (chipGroupFilter == null) return;
+        chipGroupFilter.removeAllViews();
+        addFilterChip("All", currentFilter == null);
+        LinkedHashSet<String> tags = new LinkedHashSet<>();
+        for (Document d : docs) {
+            if (d.getTag() != null && !d.getTag().isEmpty()) tags.add(d.getTag());
+        }
+        for (String t : tags) addFilterChip(t, t.equals(currentFilter));
+    }
+
+    private void addFilterChip(String label, boolean isSelected) {
+        com.google.android.material.chip.Chip chip =
+            new com.google.android.material.chip.Chip(this);
+        chip.setText(label);
+        chip.setCheckable(true);
+        chip.setChecked(isSelected);
+        chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(
+            isSelected ? 0xFFFFFFFF : 0x25FFFFFF));
+        chip.setTextColor(isSelected ? 0xFF1E3A8A : 0xFFFFFFFF);
+        chip.setChipStrokeColor(android.content.res.ColorStateList.valueOf(0x60FFFFFF));
+        chip.setChipStrokeWidth(1.5f);
+        chip.setEnsureMinTouchTargetSize(false);
+        chip.setTextSize(12f);
+        chip.setOnClickListener(v -> applyFilter("All".equals(label) ? null : label));
+        chipGroupFilter.addView(chip);
     }
 
     private void toast(String msg) {

@@ -9,66 +9,77 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingHorizontal="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="32dp">
 
+        <!-- Drag handle -->
         <View
             android:layout_width="40dp"
             android:layout_height="4dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="20dp"
-            android:background="#E5E7EB"/>
+            android:layout_marginBottom="24dp"
+            android:background="#E2E8F0"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="20dp">
-            <TextView
-                android:id="@+id/tv_detail_name"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="#111827"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
-            <TextView
-                android:id="@+id/btn_detail_close"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:gravity="center"
-                android:text="✕"
-                android:textColor="#9CA3AF"
-                android:textSize="16sp"
-                android:background="@drawable/bg_delete_btn"
-                android:clickable="true"
-                android:focusable="true"/>
-        </LinearLayout>
-
+        <!-- ── Header: Name + Close ── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tv_detail_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#0F172A"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:lineSpacingMultiplier="1.1"/>
+
+            <TextView
+                android:id="@+id/btn_detail_close"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:gravity="center"
+                android:text="✕"
+                android:textColor="#94A3B8"
+                android:textSize="14sp"
+                android:background="@drawable/bg_delete_btn"
+                android:clickable="true"
+                android:focusable="true"/>
+        </LinearLayout>
+
+        <!-- ── Status + Category row ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp">
+
             <TextView
                 android:id="@+id/tv_detail_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="5dp"
-                android:textSize="12sp"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="6dp"
+                android:textSize="11sp"
                 android:textStyle="bold"
                 android:background="@drawable/bg_status_chip"
-                android:layout_marginEnd="10dp"/>
+                android:layout_marginEnd="12dp"/>
+
             <TextView
                 android:id="@+id/tv_detail_category"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#9CA3AF"
+                android:textColor="#64748B"
                 android:textSize="13sp"/>
         </LinearLayout>
 
+        <!-- ── Days remaining highlight ── -->
         <TextView
             android:id="@+id/tv_detail_days"
             android:layout_width="match_parent"
@@ -76,35 +87,79 @@
             android:textColor="#2563EB"
             android:textSize="15sp"
             android:textStyle="bold"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- ── Divider ── -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F1F5F9"
             android:layout_marginBottom="20dp"/>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:background="#F3F4F6" android:layout_marginBottom="16dp"/>
+        <!-- ── Date rows ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:layout_marginBottom="12dp">
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:text="Issue Date"
-                android:textColor="#9CA3AF" android:textSize="14sp"/>
-            <TextView android:id="@+id/tv_detail_issue" android:layout_width="wrap_content"
-                android:layout_height="wrap_content" android:textColor="#111827" android:textSize="14sp"/>
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ISSUED"
+                    android:textColor="#CBD5E1"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.1"/>
+
+                <TextView
+                    android:id="@+id/tv_detail_issue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#0F172A"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="5dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="EXPIRES"
+                    android:textColor="#CBD5E1"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.1"/>
+
+                <TextView
+                    android:id="@+id/tv_detail_expiry"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#0F172A"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="5dp"/>
+            </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:layout_marginBottom="20dp">
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:text="Expiry Date"
-                android:textColor="#9CA3AF" android:textSize="14sp"/>
-            <TextView android:id="@+id/tv_detail_expiry" android:layout_width="wrap_content"
-                android:layout_height="wrap_content" android:textColor="#111827" android:textSize="14sp"/>
-        </LinearLayout>
-
+        <!-- ── Document image ── -->
         <ImageView
             android:id="@+id/iv_detail_image"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="220dp"
             android:scaleType="centerCrop"
             android:background="@drawable/bg_thumbnail"
+            android:layout_marginTop="8dp"
             android:visibility="gone"/>
 
     </LinearLayout>

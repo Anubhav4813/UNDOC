@@ -8,13 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DocumentRepository {
-    private static final String PREFS_NAME = "doc_expiry_prefs_v2";
     private static final String KEY_DOCS = "documents";
 
     private final SharedPreferences prefs;
 
-    public DocumentRepository(Context context) {
-        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    /** User-specific constructor — data is isolated per Firebase UID. */
+    public DocumentRepository(Context context, String uid) {
+        prefs = context.getSharedPreferences("doc_prefs_" + uid, Context.MODE_PRIVATE);
     }
 
     public List<Document> loadAll() {
@@ -24,14 +24,17 @@ public class DocumentRepository {
             JSONArray arr = new JSONArray(json);
             for (int i = 0; i < arr.length(); i++) {
                 JSONObject obj = arr.getJSONObject(i);
-                list.add(new Document(
+                Document doc = new Document(
                     obj.getInt("id"),
                     obj.getString("name"),
                     obj.optString("category", "Document"),
                     obj.getLong("issueDate"),
                     obj.getLong("expiryDate"),
                     obj.optString("imagePath", null)
-                ));
+                );
+                String savedTag = obj.optString("tag", null);
+                if (savedTag != null && !savedTag.isEmpty()) doc.setTag(savedTag);
+                list.add(doc);
             }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
@@ -48,6 +51,7 @@ public class DocumentRepository {
                 obj.put("issueDate", d.getIssueDateMillis());
                 obj.put("expiryDate", d.getExpiryDateMillis());
                 if (d.getImagePath() != null) obj.put("imagePath", d.getImagePath());
+                if (d.getTag() != null && !d.getTag().isEmpty()) obj.put("tag", d.getTag());
                 arr.put(obj);
             }
             prefs.edit().putString(KEY_DOCS, arr.toString()).apply();

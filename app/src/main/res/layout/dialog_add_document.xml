@@ -5,7 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="8dp"
+    android:paddingHorizontal="4dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="8dp"
     android:background="#FFFFFF">
 
     <!-- Document Name -->
@@ -13,15 +15,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Document Name"
-        app:boxBackgroundColor="#F9FAFB"
-        app:boxStrokeColor="#2563EB"
-        app:hintTextColor="#9CA3AF"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        style="@style/InputField">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_doc_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#111827"
+            android:textColor="#0F172A"
+            android:textSize="15sp"
             android:inputType="textCapWords"/>
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -29,69 +29,93 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="14dp"
         android:hint="Category"
-        app:boxBackgroundColor="#F9FAFB"
-        app:boxStrokeColor="#2563EB"
-        app:hintTextColor="#9CA3AF"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        style="@style/InputFieldDropdown">
         <AutoCompleteTextView
             android:id="@+id/ac_category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#111827"
+            android:textColor="#0F172A"
+            android:textSize="15sp"
             android:inputType="none"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Issue Date — hint ONLY on layout, no hint on EditText -->
+    <!-- Vehicle No. / Owner Tag (optional) -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="14dp"
+        android:hint="Vehicle No. / Owner (optional)"
+        style="@style/InputField">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_doc_tag"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#0F172A"
+            android:textSize="15sp"
+            android:inputType="textCapCharacters"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Issue Date -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
         android:hint="Issue Date"
-        app:boxBackgroundColor="#F9FAFB"
-        app:boxStrokeColor="#2563EB"
-        app:hintTextColor="#9CA3AF"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        style="@style/InputField">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_issue_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#111827"
+            android:textColor="#0F172A"
+            android:textSize="15sp"
             android:focusable="false"
             android:clickable="true"
             android:cursorVisible="false"
             android:inputType="none"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Expiry Date — hint ONLY on layout, no hint on EditText -->
+    <!-- Expiry Date -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="14dp"
         android:hint="Expiry Date"
-        app:boxBackgroundColor="#F9FAFB"
-        app:boxStrokeColor="#2563EB"
-        app:hintTextColor="#9CA3AF"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        style="@style/InputField">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_expiry_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#111827"
+            android:textColor="#0F172A"
+            android:textSize="15sp"
             android:focusable="false"
             android:clickable="true"
             android:cursorVisible="false"
             android:inputType="none"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
+    <!-- Hint text -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="📸  You can add a document photo after saving"
-        android:textColor="#9CA3AF"
-        android:textSize="12sp"
-        android:paddingBottom="4dp"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="14dp"
+        android:paddingHorizontal="4dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📸"
+            android:textSize="14sp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  You can add a document photo after saving"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"/>
+    </LinearLayout>
 
 </LinearLayout>

@@ -4,27 +4,30 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FC">
+    android:background="#F0F4F8">
 
+    <!-- ── Header ── -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#F8F9FC"
+        android:background="@android:color/transparent"
         app:elevation="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="20dp"
-            android:paddingBottom="12dp">
+            android:background="@drawable/bg_header"
+            android:orientation="vertical">
 
+            <!-- Main header row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:paddingHorizontal="22dp"
+                android:paddingTop="28dp"
+                android:paddingBottom="24dp">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -36,49 +39,79 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="UNDOC"
-                        android:textColor="#111827"
-                        android:textSize="28sp"
-                        android:textStyle="bold"/>
+                        android:textColor="#FFFFFF"
+                        android:textSize="32sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.04"/>
 
                     <TextView
                         android:id="@+id/tv_doc_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0 documents"
-                        android:textColor="#9CA3AF"
+                        android:textColor="#BFDBFE"
                         android:textSize="13sp"
-                        android:layout_marginTop="2dp"/>
+                        android:layout_marginTop="4dp"/>
                 </LinearLayout>
 
+                <!-- FAB — circle button in header -->
                 <TextView
                     android:id="@+id/fab_add"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:gravity="center"
                     android:text="+"
                     android:textColor="#FFFFFF"
-                    android:textSize="26sp"
+                    android:textSize="30sp"
                     android:textStyle="bold"
                     android:background="@drawable/bg_fab"
                     android:clickable="true"
                     android:focusable="true"
-                    android:elevation="4dp"/>
+                    android:elevation="6dp"/>
+
+                <!-- Sign out / account button -->
+                <TextView
+                    android:id="@+id/btn_sign_out"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:drawableTop="@android:drawable/ic_menu_close_clear_cancel"
+                    android:gravity="center"
+                    android:text=""
+                    android:textColor="#BFDBFE"
+                    android:textSize="9sp"
+                    android:clickable="true"
+                    android:focusable="true" />
             </LinearLayout>
 
-            <View
+            <!-- ── Filter chip bar ── -->
+            <HorizontalScrollView
+                android:id="@+id/chip_scroll"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="14dp"
-                android:background="#E5E7EB"/>
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:paddingStart="18dp"
+                android:paddingEnd="18dp"
+                android:paddingBottom="18dp">
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chip_group_filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="8dp"
+                    app:singleSelection="false"/>
+            </HorizontalScrollView>
+
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- ── Content ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <!-- Empty state -->
         <LinearLayout
             android:id="@+id/tv_empty"
             android:layout_width="match_parent"
@@ -92,38 +125,39 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="🗂️"
-                android:textSize="64sp"
+                android:textSize="72sp"
                 android:gravity="center"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="No Documents Yet"
-                android:textColor="#111827"
-                android:textSize="20sp"
+                android:textColor="#0F172A"
+                android:textSize="22sp"
                 android:textStyle="bold"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="20dp"
                 android:gravity="center"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tap the + button above to add your first document"
-                android:textColor="#9CA3AF"
+                android:text="Tap + above to track your first document"
+                android:textColor="#94A3B8"
                 android:textSize="14sp"
                 android:textAlignment="center"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="10dp"
                 android:gravity="center"/>
         </LinearLayout>
 
+        <!-- Document list -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:paddingHorizontal="16dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="24dp"/>
+            android:paddingTop="18dp"
+            android:paddingBottom="28dp"/>
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

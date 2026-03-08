@@ -5,42 +5,51 @@
         <item name="colorPrimary">#2563EB</item>
         <item name="colorPrimaryVariant">#1D4ED8</item>
         <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorSecondary">#2563EB</item>
+        <item name="colorSecondary">#3B82F6</item>
         <item name="colorOnSecondary">#FFFFFF</item>
-        <item name="android:colorBackground">#F8F9FC</item>
+        <item name="android:colorBackground">#F0F4F8</item>
         <item name="colorSurface">#FFFFFF</item>
-        <item name="colorOnSurface">#111827</item>
-        <item name="android:statusBarColor">#F8F9FC</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:navigationBarColor">#F8F9FC</item>
+        <item name="colorOnSurface">#0F172A</item>
+        <!-- Status bar matches the header gradient -->
+        <item name="android:statusBarColor">#1E3A8A</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">#F0F4F8</item>
         <item name="materialAlertDialogTheme">@style/DialogTheme</item>
-        <!-- MaterialDatePicker uses colorPrimary from app theme automatically -->
     </style>
 
+    <!-- ── Dialogs ── -->
     <style name="DialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
         <item name="android:background">#FFFFFF</item>
         <item name="colorPrimary">#2563EB</item>
-        <item name="android:textColor">#111827</item>
+        <item name="android:textColor">#0F172A</item>
         <item name="colorSurface">#FFFFFF</item>
         <item name="buttonBarPositiveButtonStyle">@style/PositiveBtn</item>
         <item name="buttonBarNegativeButtonStyle">@style/NegativeBtn</item>
+        <item name="shapeAppearanceMediumComponent">@style/RoundedDialog</item>
+    </style>
+
+    <style name="RoundedDialog" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerSize">20dp</item>
     </style>
 
     <style name="PositiveBtn" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
         <item name="android:textColor">#2563EB</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="NegativeBtn" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">#9CA3AF</item>
+        <item name="android:textColor">#94A3B8</item>
     </style>
 
     <style name="FullscreenDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
-        <item name="android:background">#F8F9FC</item>
+        <item name="android:background">#0F172A</item>
         <item name="colorPrimary">#2563EB</item>
-        <item name="android:textColor">#111827</item>
+        <item name="android:textColor">#F0F4F8</item>
         <item name="buttonBarPositiveButtonStyle">@style/PositiveBtn</item>
+        <item name="shapeAppearanceMediumComponent">@style/RoundedDialog</item>
     </style>
 
+    <!-- ── Bottom Sheets ── -->
     <style name="BottomSheetTheme" parent="Theme.MaterialComponents.BottomSheetDialog">
         <item name="android:background">#00000000</item>
         <item name="bottomSheetStyle">@style/BottomSheetStyle</item>
@@ -48,6 +57,27 @@
 
     <style name="BottomSheetStyle" parent="Widget.MaterialComponents.BottomSheet">
         <item name="android:background">#00000000</item>
+    </style>
+
+    <!-- ── Text Input Fields ── -->
+    <style name="InputField" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">#F8FAFC</item>
+        <item name="boxStrokeColor">@color/colorPrimary</item>
+        <item name="hintTextColor">#94A3B8</item>
+        <item name="boxCornerRadiusTopStart">14dp</item>
+        <item name="boxCornerRadiusTopEnd">14dp</item>
+        <item name="boxCornerRadiusBottomStart">14dp</item>
+        <item name="boxCornerRadiusBottomEnd">14dp</item>
+    </style>
+
+    <style name="InputFieldDropdown" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="boxBackgroundColor">#F8FAFC</item>
+        <item name="boxStrokeColor">@color/colorPrimary</item>
+        <item name="hintTextColor">#94A3B8</item>
+        <item name="boxCornerRadiusTopStart">14dp</item>
+        <item name="boxCornerRadiusTopEnd">14dp</item>
+        <item name="boxCornerRadiusBottomStart">14dp</item>
+        <item name="boxCornerRadiusBottomEnd">14dp</item>
     </style>
 
 </resources>

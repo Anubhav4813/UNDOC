@@ -10,6 +10,7 @@ public class Document implements Serializable {
     private long issueDateMillis;
     private long expiryDateMillis;
     private String imagePath; // local file path for uploaded image
+    private String tag;        // vehicle no., owner name, etc.
 
     public Document(int id, String name, String category, long issueDateMillis, long expiryDateMillis, String imagePath) {
         this.id = id;
@@ -27,6 +28,8 @@ public class Document implements Serializable {
     public long getExpiryDateMillis() { return expiryDateMillis; }
     public String getImagePath() { return imagePath; }
     public void setImagePath(String imagePath) { this.imagePath = imagePath; }
+    public String getTag() { return tag; }
+    public void setTag(String tag) { this.tag = tag; }
 
     public int getProgressPercent() {
         long now = System.currentTimeMillis();

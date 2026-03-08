@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Block all cleartext (HTTP) traffic for all domains -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Trust only system CAs — no user-installed certificates -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Razorpay endpoints — must be HTTPS only -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">razorpay.com</domain>
+        <domain includeSubdomains="true">api.razorpay.com</domain>
+    </domain-config>
+</network-security-config>
