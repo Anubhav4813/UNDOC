@@ -40,4 +40,4 @@ Download the latest APK from the [Releases](../../releases) page and install it 
 - FileProvider for camera integration
 
 ## License
-This application is NOT under MIT license. It is a paid application cloning it or try to use it's code for other purpose may led to court hearings... thank you.
+This application is NOT under MIT license. Cloning it or try to use it's code for other purpose may led to court hearings... thank you.
