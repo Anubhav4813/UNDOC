@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="234934513.png" alt="UNDOC Logo" width="200"/>
+</p>
 # UNDOC 📋
 
 **UNDOC** is an Android app that helps you track the expiry dates of your important documents — 
