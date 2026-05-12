@@ -4,6 +4,8 @@ local.properties
 .idea/
 app/build/
 build/
+builds/
+.update_logo.py
 *.jks
 *.keystore
 # Firebase — contains API keys, never commit

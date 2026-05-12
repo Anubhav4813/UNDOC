@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Top Geometric Segment (Vibrant Lime) -->
+    <path
+        android:fillColor="#AEEA00"
+        android:pathData="M50,10 L85,45 L70,45 L50,25 L30,45 L15,45 Z" />
+
+    <!-- Middle Geometric Segment (Emerald Green) -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M50,35 L80,65 L65,65 L50,50 L35,65 L20,65 Z" />
+
+    <!-- Bottom Geometric Segment (Deep Forest Green) -->
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M50,60 L75,85 L60,85 L50,75 L40,85 L25,85 Z" />
+
+</vector>

@@ -1,34 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand -->
-    <color name="colorPrimary">#2563EB</color>
-    <color name="colorPrimaryDark">#1D4ED8</color>
-    <color name="colorAccent">#2563EB</color>
+    <color name="ui_bg">#F4F7FB</color>
+    <color name="ui_surface">#FFFFFF</color>
+    <color name="ui_primary">#0EA5E9</color>
+    <color name="ui_primary_dark">#0369A1</color>
+    <color name="ui_text">#0F172A</color>
+    <color name="ui_text_muted">#64748B</color>
+    <color name="ui_success">#16A34A</color>
+    <color name="ui_warning">#D97706</color>
+    <color name="ui_danger">#DC2626</color>
 
-    <!-- Backgrounds -->
-    <color name="bg_app">#F0F4F8</color>
-    <color name="bg_card">#FFFFFF</color>
-    <color name="bg_countdown">#0F172A</color>
-
-    <!-- Header gradient stops -->
-    <color name="header_start">#1E3A8A</color>
-    <color name="header_end">#3B82F6</color>
-
-    <!-- Text -->
+    <color name="bg_app">#F4F7FB</color>
+    <color name="colorPrimary">#0EA5E9</color>
     <color name="text_primary">#0F172A</color>
     <color name="text_secondary">#64748B</color>
-    <color name="text_hint">#CBD5E1</color>
-    <color name="text_label">#94A3B8</color>
-
-    <!-- Status -->
-    <color name="status_valid">#10B981</color>
-    <color name="status_warning">#F59E0B</color>
-    <color name="status_critical">#EF4444</color>
-    <color name="status_expired">#94A3B8</color>
-
-    <!-- Tints -->
-    <color name="primary_light">#EFF6FF</color>
-    <color name="primary_mid">#BFDBFE</color>
+    <color name="text_hint">#94A3B8</color>
     <color name="divider">#E2E8F0</color>
-    <color name="surface_overlay">#F8FAFC</color>
 </resources>
