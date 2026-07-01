@@ -15,11 +15,12 @@ import java.util.concurrent.Executors;
 
 public class ImageRepositoryImpl implements ImageRepository {
     private final Context context;
+    private final ImageRemoteDataSource remote;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
 
-    // Keep this constructor signature so existing wiring does not break.
     public ImageRepositoryImpl(Context context, ImageRemoteDataSource remote) {
         this.context = context.getApplicationContext();
+        this.remote = remote;
     }
 
     @Override
@@ -50,7 +51,15 @@ public class ImageRepositoryImpl implements ImageRepository {
                     out.flush();
                 }
 
-                callback.onComplete(new Result.Success<>(outFile.getAbsolutePath()));
+                // After saving locally, upload to remote for persistence
+                remote.uploadImage(uid, docId, Uri.fromFile(outFile), (downloadUrl, error) -> {
+                    if (error == null && downloadUrl != null) {
+                        callback.onComplete(new Result.Success<>(downloadUrl));
+                    } else {
+                        // fallback to local path if remote fails, so it at least works locally
+                        callback.onComplete(new Result.Success<>(outFile.getAbsolutePath()));
+                    }
+                });
             } catch (Exception e) {
                 callback.onComplete(new Result.Error<>(
                         e.getMessage() != null ? e.getMessage() : "Local save failed"
@@ -67,7 +76,10 @@ public class ImageRepositoryImpl implements ImageRepository {
                 callback.onComplete(new Result.Error<>("Failed to delete local image"));
                 return;
             }
-            callback.onComplete(new Result.Success<>(""));
+            
+            remote.deleteImage(uid, docId, (url, err) -> {
+                callback.onComplete(new Result.Success<>(""));
+            });
         });
     }
 }

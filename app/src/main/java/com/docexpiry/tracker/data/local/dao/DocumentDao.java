@@ -14,6 +14,9 @@ public interface DocumentDao {
     @Query("SELECT * FROM documents WHERE uid = :uid AND deleted = 0 ORDER BY expiryDateMillis ASC")
     LiveData<List<DocumentEntity>> observeByUser(String uid);
 
+    @Query("SELECT * FROM documents WHERE uid = :uid AND id = :id")
+    DocumentEntity getById(String uid, String id);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(DocumentEntity entity);
 

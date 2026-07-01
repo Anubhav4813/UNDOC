@@ -318,25 +318,31 @@ public class DocumentsActivity extends AppCompatActivity {
                         }
 
                         String docId = UUID.randomUUID().toString();
-                        Document doc = new Document(
-                                docId,
-                                uid,
-                                name,
-                                category.isEmpty() ? "Other" : category,
-                                issueMs,
-                                expiryMs,
-                                tag.isEmpty() ? null : tag,
-                                null);
-
-                        viewModel.add(doc);
-                        
                         if (imageUri != null) {
                             viewModel.attachImage(docId, imageUri, result -> {
+                                String path = null;
                                 if (result instanceof Result.Success) {
-                                    String localPath = (String) ((Result.Success<?>) result).data;
-                                    ioExecutor.execute(() -> documentDao.updateImagePath(uid, docId, localPath, System.currentTimeMillis()));
+                                    path = (String) ((Result.Success<?>) result).data;
                                 }
+                                Document finalDoc = new Document(
+                                        docId, uid, name,
+                                        category.isEmpty() ? "Other" : category,
+                                        issueMs, expiryMs,
+                                        tag.isEmpty() ? null : tag,
+                                        path);
+                                viewModel.add(finalDoc);
                             });
+                        } else {
+                            Document doc = new Document(
+                                    docId,
+                                    uid,
+                                    name,
+                                    category.isEmpty() ? "Other" : category,
+                                    issueMs,
+                                    expiryMs,
+                                    tag.isEmpty() ? null : tag,
+                                    null);
+                            viewModel.add(doc);
                         }
                         
                         toast("Document added!");
@@ -599,9 +605,16 @@ public class DocumentsActivity extends AppCompatActivity {
                         String uid = currentDocForImage.getUid();
                         String docId = currentDocForImage.getId();
 
-                        // persist path in DB (background)
-                        ioExecutor.execute(
-                                () -> documentDao.updateImagePath(uid, docId, localPath, System.currentTimeMillis()));
+                        Document updatedDoc = new Document(
+                                currentDocForImage.getId(),
+                                currentDocForImage.getUid(),
+                                currentDocForImage.getName(),
+                                currentDocForImage.getCategory(),
+                                currentDocForImage.getIssueDateMillis(),
+                                currentDocForImage.getExpiryDateMillis(),
+                                currentDocForImage.getTag(),
+                                localPath);
+                        viewModel.add(updatedDoc);
 
                         // debug: show path and existence
                         runOnUiThread(() -> {

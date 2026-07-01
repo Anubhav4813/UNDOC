@@ -43,7 +43,24 @@ public class DocumentRepositoryImpl implements DocumentRepository {
             initialCloudSyncDone = true;
             remote.fetchAll(uid, (cloudDocs, error) -> {
                 if (error == null && cloudDocs != null) {
-                    io.execute(() -> dao.insertAll(cloudDocs));
+                    io.execute(() -> {
+                        for (DocumentEntity cloudDoc : cloudDocs) {
+                            DocumentEntity local = dao.getById(uid, cloudDoc.id);
+                            if (local != null) {
+                                // Keep local imagePath if cloud version doesn't have one
+                                if ((cloudDoc.imagePath == null || cloudDoc.imagePath.trim().isEmpty())
+                                        && (local.imagePath != null && !local.imagePath.trim().isEmpty())) {
+                                    cloudDoc.imagePath = local.imagePath;
+                                }
+                                // Only update if cloud is newer or equal (to allow initial sync)
+                                if (cloudDoc.updatedAt >= local.updatedAt) {
+                                    dao.insert(cloudDoc);
+                                }
+                            } else {
+                                dao.insert(cloudDoc);
+                            }
+                        }
+                    });
                 }
             });
         }
