@@ -27,7 +27,10 @@ public class ImageRepositoryImpl implements ImageRepository {
     public void attachLocalImage(String uid, String docId, Uri uri, Callback callback) {
         io.execute(() -> {
             try {
-                File dir = new File(context.getFilesDir(), "doc_images");
+                File baseDir = context.getExternalFilesDir(null);
+                if (baseDir == null) baseDir = context.getFilesDir();
+                
+                File dir = new File(baseDir, "doc_images");
                 if (!dir.exists() && !dir.mkdirs()) {
                     callback.onComplete(new Result.Error<>("Failed to create local image directory"));
                     return;
@@ -51,15 +54,8 @@ public class ImageRepositoryImpl implements ImageRepository {
                     out.flush();
                 }
 
-                // After saving locally, upload to remote for persistence
-                remote.uploadImage(uid, docId, Uri.fromFile(outFile), (downloadUrl, error) -> {
-                    if (error == null && downloadUrl != null) {
-                        callback.onComplete(new Result.Success<>(downloadUrl));
-                    } else {
-                        // fallback to local path if remote fails, so it at least works locally
-                        callback.onComplete(new Result.Success<>(outFile.getAbsolutePath()));
-                    }
-                });
+                // Return the local path directly as requested by the user
+                callback.onComplete(new Result.Success<>(outFile.getAbsolutePath()));
             } catch (Exception e) {
                 callback.onComplete(new Result.Error<>(
                         e.getMessage() != null ? e.getMessage() : "Local save failed"
@@ -71,15 +67,16 @@ public class ImageRepositoryImpl implements ImageRepository {
     @Override
     public void removeImage(String uid, String docId, Callback callback) {
         io.execute(() -> {
-            File file = new File(new File(context.getFilesDir(), "doc_images"), docId + ".jpg");
+            File baseDir = context.getExternalFilesDir(null);
+            if (baseDir == null) baseDir = context.getFilesDir();
+            
+            File file = new File(new File(baseDir, "doc_images"), docId + ".jpg");
             if (file.exists() && !file.delete()) {
                 callback.onComplete(new Result.Error<>("Failed to delete local image"));
                 return;
             }
             
-            remote.deleteImage(uid, docId, (url, err) -> {
-                callback.onComplete(new Result.Success<>(""));
-            });
+            callback.onComplete(new Result.Success<>(""));
         });
     }
 }

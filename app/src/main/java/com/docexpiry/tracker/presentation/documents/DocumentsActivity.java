@@ -323,7 +323,10 @@ public class DocumentsActivity extends AppCompatActivity {
                                 String path = null;
                                 if (result instanceof Result.Success) {
                                     path = (String) ((Result.Success<?>) result).data;
+                                } else if (result instanceof Result.Error) {
+                                    runOnUiThread(() -> toast("Failed to save image locally: " + ((Result.Error<?>) result).message));
                                 }
+
                                 Document finalDoc = new Document(
                                         docId, uid, name,
                                         category.isEmpty() ? "Other" : category,

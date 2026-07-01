@@ -60,10 +60,14 @@ public class DocumentsViewModel extends ViewModel {
             return;
         }
 
-        // Setup grouped stream for UI sections
         setupGroupedStream(uid);
+    }
 
-        observeUseCase.execute(uid).observeForever(result -> {
+    private void setupGroupedStream(String uid) {
+        LiveData<Result<List<Document>>> source = observeUseCase.execute(uid);
+        
+        // Update uiState from the same source
+        source.observeForever(result -> {
             if (result instanceof Result.Loading) {
                 uiState.postValue(new DocumentsUiState(true, new ArrayList<>(), null));
             } else if (result instanceof Result.Success) {
@@ -74,10 +78,7 @@ public class DocumentsViewModel extends ViewModel {
                 uiState.postValue(new DocumentsUiState(false, new ArrayList<>(), error.message));
             }
         });
-    }
 
-    private void setupGroupedStream(String uid) {
-        LiveData<Result<List<Document>>> source = observeUseCase.execute(uid);
         groupedDocumentsLiveData = Transformations.map(source, result -> {
             if (result instanceof Result.Success) {
                 List<Document> docs = (List<Document>) ((Result.Success<?>) result).data;

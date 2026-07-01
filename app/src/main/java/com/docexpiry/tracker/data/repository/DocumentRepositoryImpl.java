@@ -47,12 +47,20 @@ public class DocumentRepositoryImpl implements DocumentRepository {
                         for (DocumentEntity cloudDoc : cloudDocs) {
                             DocumentEntity local = dao.getById(uid, cloudDoc.id);
                             if (local != null) {
-                                // Keep local imagePath if cloud version doesn't have one
-                                if ((cloudDoc.imagePath == null || cloudDoc.imagePath.trim().isEmpty())
-                                        && (local.imagePath != null && !local.imagePath.trim().isEmpty())) {
+                                boolean localImageExists = false;
+                                if (local.imagePath != null && !local.imagePath.trim().isEmpty()) {
+                                    File f = new File(local.imagePath);
+                                    if (f.exists()) {
+                                        localImageExists = true;
+                                    }
+                                }
+
+                                // Keep local imagePath if cloud version doesn't have one or if local one exists
+                                if (localImageExists && (cloudDoc.imagePath == null || cloudDoc.imagePath.trim().isEmpty())) {
                                     cloudDoc.imagePath = local.imagePath;
                                 }
-                                // Only update if cloud is newer or equal (to allow initial sync)
+                                
+                                // Only update if cloud is newer, but preserve local imagePath if it exists and cloud is empty
                                 if (cloudDoc.updatedAt >= local.updatedAt) {
                                     dao.insert(cloudDoc);
                                 }
