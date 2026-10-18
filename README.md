@@ -1,6 +1,3 @@
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/0c96be6f-3ad6-40ac-bcba-20eaa143756e" alt="UNDOC Logo" width="200"/>
-</p>
 # UNDOC 📋
 
 **UNDOC** is an Android app that helps you track the expiry dates of your important documents — 
