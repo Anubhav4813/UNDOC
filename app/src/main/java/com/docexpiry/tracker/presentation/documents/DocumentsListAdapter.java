@@ -209,6 +209,15 @@ public class DocumentsListAdapter extends RecyclerView.Adapter<RecyclerView.View
                         .load(d.getImagePath())
                         .centerCrop()
                         .into(ivThumbnail);
+            } else if (d.getPdfPath() != null && !d.getPdfPath().isEmpty()) {
+                ivThumbnail.setVisibility(View.VISIBLE);
+                addImageContainer.setVisibility(View.GONE);
+                tvImageSublabel.setText("PDF Document Attached");
+                
+                // Show a PDF icon
+                ivThumbnail.setImageResource(android.R.drawable.ic_menu_save); 
+                ivThumbnail.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                ivThumbnail.setPadding(40, 40, 40, 40);
             } else {
                 ivThumbnail.setVisibility(View.GONE);
                 addImageContainer.setVisibility(View.VISIBLE);

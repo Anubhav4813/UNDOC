@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase;
 import com.docexpiry.tracker.data.local.dao.DocumentDao;
 import com.docexpiry.tracker.data.local.entity.DocumentEntity;
 
-@Database(entities = {DocumentEntity.class}, version = 1, exportSchema = false)
+@Database(entities = {DocumentEntity.class}, version = 2, exportSchema = false)
 public abstract class UndocDatabase extends RoomDatabase {
     private static volatile UndocDatabase instance;
 
@@ -21,7 +21,9 @@ public abstract class UndocDatabase extends RoomDatabase {
                             context.getApplicationContext(),
                             UndocDatabase.class,
                             "undoc.db"
-                    ).build();
+                    )
+                    .fallbackToDestructiveMigration()
+                    .build();
                 }
             }
         }

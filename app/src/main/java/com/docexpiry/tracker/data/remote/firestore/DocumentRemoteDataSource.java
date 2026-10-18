@@ -66,6 +66,7 @@ public class DocumentRemoteDataSource {
         map.put("expiryDateMillis", entity.expiryDateMillis);
         map.put("tag", entity.tag != null ? entity.tag : "");
         map.put("imagePath", entity.imagePath != null ? entity.imagePath : "");
+        map.put("pdfPath", entity.pdfPath != null ? entity.pdfPath : "");
         map.put("updatedAt", entity.updatedAt);
         map.put("deleted", entity.deleted);
         return map;
@@ -94,6 +95,9 @@ public class DocumentRemoteDataSource {
 
             String imagePath = ds.getString("imagePath");
             entity.imagePath = (imagePath == null || imagePath.trim().isEmpty()) ? null : imagePath;
+
+            String pdfPath = ds.getString("pdfPath");
+            entity.pdfPath = (pdfPath == null || pdfPath.trim().isEmpty()) ? null : pdfPath;
 
             entity.updatedAt = getLong(ds, "updatedAt", System.currentTimeMillis());
             entity.deleted = Boolean.TRUE.equals(ds.getBoolean("deleted"));

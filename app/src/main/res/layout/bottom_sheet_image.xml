@@ -60,6 +60,24 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/btn_pdf"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_sheet_btn"
+        android:padding="16dp"
+        android:layout_marginBottom="10dp"
+        android:clickable="true"
+        android:focusable="true">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="📄" android:textSize="20sp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="  Upload PDF"
+            android:textColor="#111827" android:textSize="15sp"/>
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/btn_view_image"
         android:layout_width="match_parent"
         android:layout_height="56dp"

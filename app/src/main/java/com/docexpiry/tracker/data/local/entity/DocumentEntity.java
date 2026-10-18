@@ -17,6 +17,7 @@ public class DocumentEntity {
     public long expiryDateMillis;
     public String tag;
     public String imagePath;
+    public String pdfPath;
     public long updatedAt;
     public boolean dirty;
     public boolean deleted;

@@ -1,5 +1,6 @@
 package com.docexpiry.tracker.presentation.documents;
 
+import android.graphics.Color;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -34,6 +36,8 @@ import com.docexpiry.tracker.domain.usecase.document.DeleteDocumentUseCase;
 import com.docexpiry.tracker.domain.usecase.document.ObserveDocumentsUseCase;
 import com.docexpiry.tracker.domain.usecase.image.AttachImageUseCase;
 import com.docexpiry.tracker.domain.usecase.image.RemoveImageUseCase;
+import com.docexpiry.tracker.domain.usecase.pdf.AttachPdfUseCase;
+import com.docexpiry.tracker.domain.usecase.pdf.RemovePdfUseCase;
 import com.docexpiry.tracker.presentation.auth.LoginActivity;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -48,6 +52,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import android.net.Uri;
 import java.io.File;
+import android.graphics.Bitmap;
+import android.graphics.pdf.PdfRenderer;
+import android.os.ParcelFileDescriptor;
 import com.docexpiry.tracker.presentation.documents.preview.ImagePreviewActivity;
 import com.docexpiry.tracker.domain.service.NotificationService;
 import com.docexpiry.tracker.data.worker.NotificationServiceImpl;
@@ -72,6 +79,7 @@ public class DocumentsActivity extends AppCompatActivity {
     private static final int REQUEST_PICK_IMAGE = 1001;
     private static final int REQUEST_IMAGE_CAPTURE = 1002;
     private static final int REQUEST_GALLERY_FOR_NEW_DOC = 1003;
+    private static final int REQUEST_PICK_PDF = 1004;
     private static final int REQUEST_CAMERA_PERMISSION = 2001;
 
     private DocumentsViewModel viewModel;
@@ -130,6 +138,8 @@ public class DocumentsActivity extends AppCompatActivity {
                 new DeleteDocumentUseCase(documentRepository),
                 new AttachImageUseCase(imageRepository),
                 new RemoveImageUseCase(imageRepository),
+                new AttachPdfUseCase(imageRepository),
+                new RemovePdfUseCase(imageRepository),
                 authRepository);
 
         viewModel = new ViewModelProvider(this, factory).get(DocumentsViewModel.class);
@@ -160,15 +170,7 @@ public class DocumentsActivity extends AppCompatActivity {
 
             @Override
             public void onClick(Document doc) {
-                if (doc.getImagePath() == null || doc.getImagePath().trim().isEmpty()) {
-                    toast("No image attached");
-                    return;
-                }
-
-                Intent intent = new Intent(DocumentsActivity.this, ImagePreviewActivity.class);
-                intent.putExtra(ImagePreviewActivity.EXTRA_IMAGE_PATH, doc.getImagePath());
-                intent.putExtra(ImagePreviewActivity.EXTRA_DOC_NAME, doc.getName());
-                startActivity(intent);
+                showDetailSheet(doc);
             }
 
             @Override
@@ -179,9 +181,11 @@ public class DocumentsActivity extends AppCompatActivity {
                     intent.putExtra(ImagePreviewActivity.EXTRA_IMAGE_PATH, doc.getImagePath());
                     intent.putExtra(ImagePreviewActivity.EXTRA_DOC_NAME, doc.getName());
                     startActivity(intent);
+                } else if (doc.getPdfPath() != null && !doc.getPdfPath().trim().isEmpty()) {
+                    viewPdf(doc.getPdfPath());
                 } else {
-                    // Otherwise, pick one
-                    pickImageForDocument(doc);
+                    // Otherwise, show options to pick image or PDF
+                    showImageOptions(doc);
                 }
             }
         });
@@ -201,7 +205,7 @@ public class DocumentsActivity extends AppCompatActivity {
         });
 
         btnAdd.setOnClickListener(v -> {
-            String[] options = {"Take Photo", "Choose from Gallery", "Manual Entry"};
+            String[] options = {"Take Photo", "Choose from Gallery", "Upload PDF", "Manual Entry"};
             new MaterialAlertDialogBuilder(this, R.style.DialogTheme)
                     .setTitle("Add Document")
                     .setItems(options, (dialog, which) -> {
@@ -209,6 +213,8 @@ public class DocumentsActivity extends AppCompatActivity {
                             checkCameraPermissionAndLaunch();
                         } else if (which == 1) {
                             pickFromGalleryForNewDoc();
+                        } else if (which == 2) {
+                            pickPdf();
                         } else {
                             showAddDialog();
                         }
@@ -247,10 +253,10 @@ public class DocumentsActivity extends AppCompatActivity {
     }
 
     private void showAddDialog() {
-        showAddDialog("", "", null);
+        showAddDialog("", "", null, null);
     }
 
-    private void showAddDialog(String prefilledIssue, String prefilledExpiry, Uri imageUri) {
+    private void showAddDialog(String prefilledIssue, String prefilledExpiry, Uri imageUri, Uri pdfUri) {
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_add_document, null);
 
         TextInputEditText etName = view.findViewById(R.id.et_doc_name);
@@ -332,6 +338,25 @@ public class DocumentsActivity extends AppCompatActivity {
                                         category.isEmpty() ? "Other" : category,
                                         issueMs, expiryMs,
                                         tag.isEmpty() ? null : tag,
+                                        path,
+                                        null);
+                                viewModel.add(finalDoc);
+                            });
+                        } else if (pdfUri != null) {
+                            viewModel.attachPdf(docId, pdfUri, result -> {
+                                String path = null;
+                                if (result instanceof Result.Success) {
+                                    path = (String) ((Result.Success<?>) result).data;
+                                } else if (result instanceof Result.Error) {
+                                    runOnUiThread(() -> toast("Failed to save PDF locally: " + ((Result.Error<?>) result).message));
+                                }
+
+                                Document finalDoc = new Document(
+                                        docId, uid, name,
+                                        category.isEmpty() ? "Other" : category,
+                                        issueMs, expiryMs,
+                                        tag.isEmpty() ? null : tag,
+                                        null,
                                         path);
                                 viewModel.add(finalDoc);
                             });
@@ -344,6 +369,7 @@ public class DocumentsActivity extends AppCompatActivity {
                                     issueMs,
                                     expiryMs,
                                     tag.isEmpty() ? null : tag,
+                                    null,
                                     null);
                             viewModel.add(doc);
                         }
@@ -398,7 +424,7 @@ public class DocumentsActivity extends AppCompatActivity {
                 dispatchTakePictureIntent();
             } else {
                 toast("Camera permission is required to scan documents");
-                showAddDialog("", "", null);
+                showAddDialog("", "", null, null);
             }
         }
     }
@@ -417,11 +443,11 @@ public class DocumentsActivity extends AppCompatActivity {
                 }
             } catch (IOException ex) {
                 toast("Error creating image file");
-                showAddDialog("", "", null);
+                showAddDialog("", "", null, null);
             }
         } else {
             toast("No camera app found");
-            showAddDialog("", "", null);
+            showAddDialog("", "", null, null);
         }
     }
 
@@ -438,6 +464,52 @@ public class DocumentsActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_GALLERY_FOR_NEW_DOC);
     }
 
+    private void pickPdf() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/pdf");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(Intent.createChooser(intent, "Select PDF"), REQUEST_PICK_PDF);
+    }
+
+    private void runPdfTextRecognition(Uri uri) {
+        ioExecutor.execute(() -> {
+            try {
+                ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
+                if (pfd != null) {
+                    PdfRenderer renderer = new PdfRenderer(pfd);
+                    StringBuilder fullText = new StringBuilder();
+                    int pageCount = Math.min(renderer.getPageCount(), 3); // Check first 3 pages
+
+                    for (int i = 0; i < pageCount; i++) {
+                        PdfRenderer.Page page = renderer.openPage(i);
+                        Bitmap bitmap = Bitmap.createBitmap(page.getWidth(), page.getHeight(), Bitmap.Config.ARGB_8888);
+                        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+                        
+                        InputImage image = InputImage.fromBitmap(bitmap, 0);
+                        TextRecognizer recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+                        
+                        try {
+                            com.google.android.gms.tasks.Task<com.google.mlkit.vision.text.Text> result = recognizer.process(image);
+                            com.google.mlkit.vision.text.Text text = com.google.android.gms.tasks.Tasks.await(result);
+                            fullText.append(text.getText()).append("\n");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        page.close();
+                    }
+                    renderer.close();
+                    pfd.close();
+
+                    runOnUiThread(() -> extractDatesAndShowDialog(fullText.toString(), null, uri));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                runOnUiThread(() -> toast("Error reading PDF: " + e.getMessage()));
+            }
+        });
+    }
+
     private void runTextRecognition(Uri uri) {
         try {
             InputImage image = InputImage.fromFilePath(this, uri);
@@ -445,19 +517,19 @@ public class DocumentsActivity extends AppCompatActivity {
             recognizer.process(image)
                     .addOnSuccessListener(text -> {
                         String fullText = text.getText();
-                        extractDatesAndShowDialog(fullText, uri);
+                        extractDatesAndShowDialog(fullText, uri, null);
                     })
                     .addOnFailureListener(e -> {
                         toast("OCR failed: " + e.getMessage());
-                        showAddDialog("", "", uri);
+                        showAddDialog("", "", uri, null);
                     });
         } catch (IOException e) {
             toast("Error loading image for OCR");
-            showAddDialog("", "", uri);
+            showAddDialog("", "", uri, null);
         }
     }
 
-    private void extractDatesAndShowDialog(String text, Uri imageUri) {
+    private void extractDatesAndShowDialog(String text, Uri imageUri, Uri pdfUri) {
         String lowerText = text.toLowerCase(Locale.getDefault());
 
         // Simple regex for dd/MM/yyyy, dd-MM-yyyy, dd.MM.yyyy OR yyyy/MM/dd, etc.
@@ -578,14 +650,116 @@ public class DocumentsActivity extends AppCompatActivity {
             }
         } catch (Exception ignored) {}
 
-        showAddDialog(issueStr, expiryStr, imageUri);
+        showAddDialog(issueStr, expiryStr, imageUri, pdfUri);
     }
 
     private void pickImageForDocument(Document doc) {
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType("image/*");
-        currentDocForImage = doc;
-        startActivityForResult(intent, REQUEST_PICK_IMAGE);
+        showImageOptions(doc);
+    }
+
+    private void showImageOptions(Document doc) {
+        View sheet = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_image, null);
+        com.google.android.material.bottomsheet.BottomSheetDialog dialog = 
+            new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        dialog.setContentView(sheet);
+
+        sheet.findViewById(R.id.btn_camera).setOnClickListener(v -> {
+            dialog.dismiss();
+            checkCameraPermissionAndLaunch();
+        });
+        sheet.findViewById(R.id.btn_gallery).setOnClickListener(v -> {
+            dialog.dismiss();
+            currentDocForImage = doc;
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            startActivityForResult(intent, REQUEST_PICK_IMAGE);
+        });
+        sheet.findViewById(R.id.btn_pdf).setOnClickListener(v -> {
+            dialog.dismiss();
+            currentDocForImage = doc;
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("application/pdf");
+            startActivityForResult(Intent.createChooser(intent, "Select PDF"), REQUEST_PICK_PDF);
+        });
+
+        dialog.show();
+    }
+
+    private void showDetailSheet(Document doc) {
+        View sheet = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_detail, null);
+        com.google.android.material.bottomsheet.BottomSheetDialog dialog =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.BottomSheetTheme);
+        dialog.setContentView(sheet);
+
+        TextView tvName = sheet.findViewById(R.id.tv_detail_name);
+        TextView tvCategory = sheet.findViewById(R.id.tv_detail_category);
+        TextView tvStatus = sheet.findViewById(R.id.tv_detail_status);
+        TextView tvDays = sheet.findViewById(R.id.tv_detail_days);
+        TextView tvIssue = sheet.findViewById(R.id.tv_detail_issue);
+        TextView tvExpiry = sheet.findViewById(R.id.tv_detail_expiry);
+        ImageView ivImage = sheet.findViewById(R.id.iv_detail_image);
+        View layoutPdf = sheet.findViewById(R.id.layout_detail_pdf);
+        View btnClose = sheet.findViewById(R.id.btn_detail_close);
+
+        tvName.setText(doc.getName());
+        tvCategory.setText(doc.getCategory());
+
+        long now = System.currentTimeMillis();
+        long diff = doc.getExpiryDateMillis() - now;
+        long days = diff / (24 * 60 * 60 * 1000);
+
+        if (doc.isExpired()) {
+            tvStatus.setText("EXPIRED");
+            tvStatus.setBackgroundResource(R.drawable.bg_sheet_btn_danger);
+            tvDays.setText("Document has expired");
+            tvDays.setTextColor(Color.RED);
+        } else {
+            tvStatus.setText("ACTIVE");
+            tvStatus.setBackgroundResource(R.drawable.bg_status_chip);
+            tvDays.setText(days + " days remaining");
+            tvDays.setTextColor(getResources().getColor(R.color.ui_primary));
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+        tvIssue.setText(sdf.format(new Date(doc.getIssueDateMillis())));
+        tvExpiry.setText(sdf.format(new Date(doc.getExpiryDateMillis())));
+
+        if (doc.getImagePath() != null && !doc.getImagePath().isEmpty()) {
+            ivImage.setVisibility(View.VISIBLE);
+            layoutPdf.setVisibility(View.GONE);
+            com.bumptech.glide.Glide.with(this)
+                    .load(doc.getImagePath())
+                    .into(ivImage);
+            ivImage.setOnClickListener(v -> {
+                Intent intent = new Intent(this, ImagePreviewActivity.class);
+                intent.putExtra(ImagePreviewActivity.EXTRA_IMAGE_PATH, doc.getImagePath());
+                intent.putExtra(ImagePreviewActivity.EXTRA_DOC_NAME, doc.getName());
+                startActivity(intent);
+            });
+        } else if (doc.getPdfPath() != null && !doc.getPdfPath().isEmpty()) {
+            ivImage.setVisibility(View.GONE);
+            layoutPdf.setVisibility(View.VISIBLE);
+            layoutPdf.setOnClickListener(v -> viewPdf(doc.getPdfPath()));
+        } else {
+            ivImage.setVisibility(View.GONE);
+            layoutPdf.setVisibility(View.GONE);
+        }
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void viewPdf(String path) {
+        try {
+            File file = new File(path);
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, "application/pdf");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+        } catch (Exception e) {
+            toast("Cannot open PDF: " + e.getMessage());
+        }
     }
 
     private Uri toUri(String imagePath) {
@@ -602,21 +776,22 @@ public class DocumentsActivity extends AppCompatActivity {
         if (requestCode == REQUEST_PICK_IMAGE && resultCode == RESULT_OK && data != null) {
             android.net.Uri imageUri = data.getData();
             if (currentDocForImage != null && imageUri != null) {
-                viewModel.attachImage(currentDocForImage.getId(), imageUri, result -> {
+                Document targetDoc = currentDocForImage;
+                currentDocForImage = null;
+                viewModel.attachImage(targetDoc.getId(), imageUri, result -> {
                     if (result instanceof Result.Success) {
                         String localPath = (String) ((Result.Success<?>) result).data;
-                        String uid = currentDocForImage.getUid();
-                        String docId = currentDocForImage.getId();
 
                         Document updatedDoc = new Document(
-                                currentDocForImage.getId(),
-                                currentDocForImage.getUid(),
-                                currentDocForImage.getName(),
-                                currentDocForImage.getCategory(),
-                                currentDocForImage.getIssueDateMillis(),
-                                currentDocForImage.getExpiryDateMillis(),
-                                currentDocForImage.getTag(),
-                                localPath);
+                                targetDoc.getId(),
+                                targetDoc.getUid(),
+                                targetDoc.getName(),
+                                targetDoc.getCategory(),
+                                targetDoc.getIssueDateMillis(),
+                                targetDoc.getExpiryDateMillis(),
+                                targetDoc.getTag(),
+                                localPath,
+                                targetDoc.getPdfPath());
                         viewModel.add(updatedDoc);
 
                         // debug: show path and existence
@@ -624,7 +799,7 @@ public class DocumentsActivity extends AppCompatActivity {
                             Toast.makeText(this, "Saved: " + localPath, Toast.LENGTH_LONG).show();
                             Intent preview = new Intent(DocumentsActivity.this, ImagePreviewActivity.class);
                             preview.putExtra(ImagePreviewActivity.EXTRA_IMAGE_PATH, localPath);
-                            preview.putExtra(ImagePreviewActivity.EXTRA_DOC_NAME, currentDocForImage.getName());
+                            preview.putExtra(ImagePreviewActivity.EXTRA_DOC_NAME, targetDoc.getName());
                             startActivity(preview);
                         });
                     } else if (result instanceof Result.Error) {
@@ -632,6 +807,35 @@ public class DocumentsActivity extends AppCompatActivity {
                         runOnUiThread(() -> toast("Save failed: " + err));
                     }
                 });
+            }
+        } else if (requestCode == REQUEST_PICK_PDF && resultCode == RESULT_OK && data != null) {
+            Uri pdfUri = data.getData();
+            if (currentDocForImage != null && pdfUri != null) {
+                Document targetDoc = currentDocForImage;
+                currentDocForImage = null;
+                viewModel.attachPdf(targetDoc.getId(), pdfUri, result -> {
+                    if (result instanceof Result.Success) {
+                        String localPath = (String) ((Result.Success<?>) result).data;
+                        Document updatedDoc = new Document(
+                                targetDoc.getId(),
+                                targetDoc.getUid(),
+                                targetDoc.getName(),
+                                targetDoc.getCategory(),
+                                targetDoc.getIssueDateMillis(),
+                                targetDoc.getExpiryDateMillis(),
+                                targetDoc.getTag(),
+                                targetDoc.getImagePath(),
+                                localPath);
+                        viewModel.add(updatedDoc);
+                        runOnUiThread(() -> toast("PDF saved locally"));
+                    } else if (result instanceof Result.Error) {
+                        String err = ((Result.Error<?>) result).message;
+                        runOnUiThread(() -> toast("Save failed: " + err));
+                    }
+                });
+            } else if (pdfUri != null) {
+                // Main "Add Document" -> "Upload PDF" flow
+                runPdfTextRecognition(pdfUri);
             }
         } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             if (cameraPhotoUri != null) {

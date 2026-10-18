@@ -27,12 +27,12 @@ public class DocumentListItem {
 
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (!(o instanceof DocumentListItem)) return false;
         DocumentListItem other = (DocumentListItem) o;
         return type == other.type &&
                Objects.equals(headerTitle, other.headerTitle) &&
-               Objects.equals(document != null ? document.getId() : null,
-                              other.document != null ? other.document.getId() : null);
+               Objects.equals(document, other.document);
     }
 
     @Override

@@ -65,17 +65,73 @@ public class ImageRepositoryImpl implements ImageRepository {
     }
 
     @Override
+    public void attachLocalPdf(String uid, String docId, Uri uri, Callback callback) {
+        io.execute(() -> {
+            try {
+                File baseDir = context.getExternalFilesDir(null);
+                if (baseDir == null) baseDir = context.getFilesDir();
+
+                File dir = new File(baseDir, "doc_pdfs");
+                if (!dir.exists() && !dir.mkdirs()) {
+                    callback.onComplete(new Result.Error<>("Failed to create local PDF directory"));
+                    return;
+                }
+
+                File outFile = new File(dir, docId + ".pdf");
+
+                try (InputStream in = context.getContentResolver().openInputStream(uri);
+                     FileOutputStream out = new FileOutputStream(outFile, false)) {
+
+                    if (in == null) {
+                        callback.onComplete(new Result.Error<>("Unable to read selected PDF"));
+                        return;
+                    }
+
+                    byte[] buffer = new byte[8192];
+                    int len;
+                    while ((len = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, len);
+                    }
+                    out.flush();
+                }
+
+                callback.onComplete(new Result.Success<>(outFile.getAbsolutePath()));
+            } catch (Exception e) {
+                callback.onComplete(new Result.Error<>(
+                        e.getMessage() != null ? e.getMessage() : "Local PDF save failed"
+                ));
+            }
+        });
+    }
+
+    @Override
     public void removeImage(String uid, String docId, Callback callback) {
         io.execute(() -> {
             File baseDir = context.getExternalFilesDir(null);
             if (baseDir == null) baseDir = context.getFilesDir();
-            
+
             File file = new File(new File(baseDir, "doc_images"), docId + ".jpg");
             if (file.exists() && !file.delete()) {
                 callback.onComplete(new Result.Error<>("Failed to delete local image"));
                 return;
             }
-            
+
+            callback.onComplete(new Result.Success<>(""));
+        });
+    }
+
+    @Override
+    public void removePdf(String uid, String docId, Callback callback) {
+        io.execute(() -> {
+            File baseDir = context.getExternalFilesDir(null);
+            if (baseDir == null) baseDir = context.getFilesDir();
+
+            File file = new File(new File(baseDir, "doc_pdfs"), docId + ".pdf");
+            if (file.exists() && !file.delete()) {
+                callback.onComplete(new Result.Error<>("Failed to delete local PDF"));
+                return;
+            }
+
             callback.onComplete(new Result.Success<>(""));
         });
     }

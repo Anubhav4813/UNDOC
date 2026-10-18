@@ -16,7 +16,8 @@ public class DocumentMapper {
                 entity.issueDateMillis,
                 entity.expiryDateMillis,
                 entity.tag,
-                entity.imagePath
+                entity.imagePath,
+                entity.pdfPath
         );
     }
 
@@ -30,6 +31,7 @@ public class DocumentMapper {
         entity.expiryDateMillis = document.getExpiryDateMillis();
         entity.tag = document.getTag();
         entity.imagePath = document.getImagePath();
+        entity.pdfPath = document.getPdfPath();
         entity.updatedAt = System.currentTimeMillis();
         entity.dirty = true;
         entity.deleted = false;

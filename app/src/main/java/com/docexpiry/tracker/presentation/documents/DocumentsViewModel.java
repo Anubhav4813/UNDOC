@@ -14,6 +14,8 @@ import com.docexpiry.tracker.domain.usecase.document.DeleteDocumentUseCase;
 import com.docexpiry.tracker.domain.usecase.document.ObserveDocumentsUseCase;
 import com.docexpiry.tracker.domain.usecase.image.AttachImageUseCase;
 import com.docexpiry.tracker.domain.usecase.image.RemoveImageUseCase;
+import com.docexpiry.tracker.domain.usecase.pdf.AttachPdfUseCase;
+import com.docexpiry.tracker.domain.usecase.pdf.RemovePdfUseCase;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -25,6 +27,8 @@ public class DocumentsViewModel extends ViewModel {
     private final DeleteDocumentUseCase deleteUseCase;
     private final AttachImageUseCase attachImageUseCase;
     private final RemoveImageUseCase removeImageUseCase;
+    private final AttachPdfUseCase attachPdfUseCase;
+    private final RemovePdfUseCase removePdfUseCase;
     private final AuthRepository authRepository;
 
     private final MutableLiveData<DocumentsUiState> uiState = new MutableLiveData<>(DocumentsUiState.idle());
@@ -40,12 +44,16 @@ public class DocumentsViewModel extends ViewModel {
             DeleteDocumentUseCase deleteUseCase,
             AttachImageUseCase attachImageUseCase,
             RemoveImageUseCase removeImageUseCase,
+            AttachPdfUseCase attachPdfUseCase,
+            RemovePdfUseCase removePdfUseCase,
             AuthRepository authRepository) {
         this.observeUseCase = observeUseCase;
         this.addUseCase = addUseCase;
         this.deleteUseCase = deleteUseCase;
         this.attachImageUseCase = attachImageUseCase;
         this.removeImageUseCase = removeImageUseCase;
+        this.attachPdfUseCase = attachPdfUseCase;
+        this.removePdfUseCase = removePdfUseCase;
         this.authRepository = authRepository;
     }
 
@@ -168,10 +176,24 @@ public class DocumentsViewModel extends ViewModel {
         attachImageUseCase.execute(uid, docId, uri, callback);
     }
 
+    public void attachPdf(String docId, Uri uri, ImageRepository.Callback callback) {
+        String uid = authRepository.currentUid();
+        if (uid == null)
+            return;
+        attachPdfUseCase.execute(uid, docId, uri, callback);
+    }
+
     public void removeImage(String docId, ImageRepository.Callback callback) {
         String uid = authRepository.currentUid();
         if (uid == null)
             return;
         removeImageUseCase.execute(uid, docId, callback);
+    }
+
+    public void removePdf(String docId, ImageRepository.Callback callback) {
+        String uid = authRepository.currentUid();
+        if (uid == null)
+            return;
+        removePdfUseCase.execute(uid, docId, callback);
     }
 }

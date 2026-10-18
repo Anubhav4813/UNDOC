@@ -9,10 +9,10 @@ import com.docexpiry.tracker.data.mapper.DocumentMapper;
 import com.docexpiry.tracker.data.remote.firestore.DocumentRemoteDataSource;
 import com.docexpiry.tracker.domain.model.Document;
 import com.docexpiry.tracker.domain.repository.DocumentRepository;
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import android.content.Context;
 import com.docexpiry.tracker.domain.service.NotificationService;
 
 public class DocumentRepositoryImpl implements DocumentRepository {

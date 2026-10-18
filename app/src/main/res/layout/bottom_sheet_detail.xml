@@ -162,5 +162,31 @@
             android:layout_marginTop="8dp"
             android:visibility="gone"/>
 
+        <!-- ── Document PDF ── -->
+        <LinearLayout
+            android:id="@+id/layout_detail_pdf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/bg_thumbnail"
+            android:layout_marginTop="8dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📄"
+                android:textSize="24sp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="PDF Document Attached"
+                android:textColor="#0F172A"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>
